@@ -1,492 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sound Alert System</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
-      :root {
-        --primary-color: #00aaff;
-        --primary-dark: #0088cc;
-        --alert-color: #ff4757;
-        --stop-color: #ff6347;
-        --light-bg: #f0f8ff;
-        --dark-text: #333;
-        --light-text: #777;
-        --border-color: #d6e9f8;
-        --shadow: 0 6px 20px rgba(0, 170, 255, 0.15);
-      }
+        :root {
+            --primary-color: #00aaff; /* Bright Blue */
+            --primary-dark: #0088cc;
+            --alert-color: #ff4757; /* Bright Red */
+            --stop-color: #ff6347; /* Tomato Red */
+            --light-bg: #f0f8ff; /* Light Blue Tint */
+            --dark-text: #333;
+            --light-text: #777;
+            --border-color: #d6e9f8;
+            --shadow: 0 6px 20px rgba(0, 170, 255, 0.15);
+        }
+        /* (বাকি সব CSS একই আছে) */
+        body, .container, #settings, #settings legend,
+        #settings div, #settings label, #settings:disabled,
+        .controls, #cartoonVisualizer, #cartoonVisualizer.alert,
+        @keyframes shake, .sound-level-meter, #soundLevelBar,
+        .button, .button:active, #toggleButton, #toggleButton:hover,
+        #toggleButton.stop-mode, #status, #logContainer,
+        #logContainer h3, #logList, #logList li, @keyframes slideIn {
+             /* ... (এই সব স্টাইল আগের মতোই আছে) ... */
+        }
 
-      /* (বাকি সব CSS একই আছে) */
-      body,
-      .container,
-      #settings,
-      #settings legend,
-      #settings div,
-      #settings label,
-      #settings input,
-      #settings input:focus,
-      #settings:disabled,
-      .controls,
-      #status,
-      #logContainer,
-      #logContainer h3,
-      #logList,
-      #logList li,
-      @keyframes slideIn {
-        /* ... (এই সব স্টাইল আগের মতোই আছে) ... */
-      }
+        /* === ইনপুট বক্সের বদলে ড্রপডাউন স্টাইল === */
+        #settings input, #settings select {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #fcfcfc;
+        }
+        #settings input:focus, #settings select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.15);
+        }
+        
+        /* (নিচের CSS কোডগুলি শুধু কপি-পেস্ট করুন) */
+        body { font-family: 'Roboto', sans-serif; background: var(--light-bg); color: var(--dark-text); display: grid; place-items: center; min-height: 100vh; padding: 20px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .container { width: 100%; max-width: 480px; background: #ffffff; border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; border: 2px solid #fff; }
+        #settings { padding: 25px; border: none; background-color: #fff; border-bottom: 1px solid var(--border-color); transition: opacity 0.3s ease; }
+        #settings legend { font-size: 1.6rem; font-weight: 700; color: var(--primary-color); margin-bottom: 25px; text-align: center; width: 100%; }
+        #settings div { margin-bottom: 18px; }
+        #settings label { font-weight: 500; display: block; margin-bottom: 8px; color: var(--light-text); font-size: 0.95rem; }
+        #settings:disabled { opacity: 0.5; pointer-events: none; }
+        .controls { padding: 25px; text-align: center; position: relative; }
+        #cartoonVisualizer { font-size: 5rem; margin-bottom: 15px; transition: transform 0.1s ease-out, color 0.3s; cursor: default; position: relative; z-index: 1; }
+        #cartoonVisualizer.alert { color: var(--alert-color); animation: shake 0.4s infinite; }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+        .sound-level-meter { width: 80%; height: 30px; background-color: var(--light-bg); border: 2px solid var(--border-color); border-radius: 15px; margin: 0 auto 20px auto; overflow: hidden; }
+        #soundLevelBar { width: 0%; height: 100%; background-color: hsl(120, 100%, 50%); border-radius: 15px; transition: width 0.1s ease-out, background-color 0.1s ease-out; }
+        .button { width: 100%; font-size: 1.2rem; font-weight: 700; padding: 16px 30px; cursor: pointer; color: white; border: none; border-radius: 10px; transition: background-color 0.3s, transform 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; z-index: 2; }
+        .button:active { transform: scale(0.97); }
+        #toggleButton { background: var(--primary-color); }
+        #toggleButton:hover { background: var(--primary-dark); }
+        #toggleButton.stop-mode { background: var(--stop-color); }
+        #toggleButton.stop-mode:hover { background: var(--alert-color); }
+        #status { font-size: 1.05rem; margin-top: 20px; color: var(--light-text); min-height: 1.2em; }
+        #logContainer { background: var(--light-bg); padding: 20px 25px; border-top: 1px solid var(--border-color); }
+        #logContainer h3 { font-weight: 500; margin-bottom: 15px; text-align: center; color: var(--dark-text); font-size: 1.3rem; }
+        #logList { list-style: none; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); background: #fff; border-radius: 10px; padding: 10px; box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.03); }
+        #logList li { padding: 10px 12px; font-family: 'Roboto Mono', monospace; font-size: 0.85rem; color: var(--dark-text); border-bottom: 1px solid #eee; animation: slideIn 0.3s ease-out; }
+        #logList li:last-child { border-bottom: none; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 
-      /* === এই দুটি জায়গায় পরিবর্তন করা হয়েছে === */
-
-      #cartoonVisualizer {
-        font-size: 5rem;
-        margin-bottom: 15px;
-        transition: transform 0.1s ease-out, color 0.3s;
-        cursor: default;
-
-        /* নতুন: স্ট্যাকিং কন্ট্রোল */
-        position: relative; /* z-index কাজ করার জন্য এটি প্রয়োজন */
-        z-index: 1; /* এটিকে নিচে রাখা হবে */
-      }
-
-      .button {
-        width: 100%;
-        font-size: 1.2rem;
-        font-weight: 700;
-        padding: 16px 30px;
-        cursor: pointer;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        transition: background-color 0.3s, transform 0.1s;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-
-        /* নতুন: স্ট্যাকিং কন্ট্রোল */
-        position: relative; /* z-index কাজ করার জন্য এটি প্রয়োজন */
-        z-index: 2; /* এটিকে লোগোর উপরে রাখা হবে */
-      }
-
-      /* === পরিবর্তন শেষ === */
-
-      /* (বাকি সব CSS আগের মতোই আছে) */
-      body {
-        font-family: "Roboto", sans-serif;
-        background: var(--light-bg);
-        color: var(--dark-text);
-        display: grid;
-        place-items: center;
-        min-height: 100vh;
-        padding: 20px;
-      }
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      .container {
-        width: 100%;
-        max-width: 480px;
-        background: #ffffff;
-        border-radius: 20px;
-        box-shadow: var(--shadow);
-        overflow: hidden;
-        border: 2px solid #fff;
-      }
-      #settings {
-        padding: 25px;
-        border: none;
-        background-color: #fff;
-        border-bottom: 1px solid var(--border-color);
-        transition: opacity 0.3s ease;
-      }
-      #settings legend {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: var(--primary-color);
-        margin-bottom: 25px;
-        text-align: center;
-        width: 100%;
-      }
-      #settings div {
-        margin-bottom: 18px;
-      }
-      #settings label {
-        font-weight: 500;
-        display: block;
-        margin-bottom: 8px;
-        color: var(--light-text);
-        font-size: 0.95rem;
-      }
-      #settings input {
-        width: 100%;
-        padding: 14px;
-        font-size: 1rem;
-        border: 2px solid var(--border-color);
-        border-radius: 10px;
-        transition: border-color 0.3s, box-shadow 0.3s;
-        background-color: #fcfcfc;
-      }
-      #settings input:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.15);
-      }
-      #settings:disabled {
-        opacity: 0.5;
-        pointer-events: none;
-      }
-      .controls {
-        padding: 25px;
-        text-align: center;
-        position: relative;
-      }
-      #cartoonVisualizer.alert {
-        color: var(--alert-color);
-        animation: shake 0.4s infinite;
-      }
-      @keyframes shake {
-        0% {
-          transform: translate(1px, 1px) rotate(0deg);
-        }
-        10% {
-          transform: translate(-1px, -2px) rotate(-1deg);
-        }
-        20% {
-          transform: translate(-3px, 0px) rotate(1deg);
-        }
-        30% {
-          transform: translate(3px, 2px) rotate(0deg);
-        }
-        40% {
-          transform: translate(1px, -1px) rotate(1deg);
-        }
-        50% {
-          transform: translate(-1px, 2px) rotate(-1deg);
-        }
-        60% {
-          transform: translate(-3px, 1px) rotate(0deg);
-        }
-        70% {
-          transform: translate(3px, 1px) rotate(-1deg);
-        }
-        80% {
-          transform: translate(-1px, -1px) rotate(1deg);
-        }
-        90% {
-          transform: translate(1px, 2px) rotate(0deg);
-        }
-        100% {
-          transform: translate(1px, -2px) rotate(-1deg);
-        }
-      }
-      .sound-level-meter {
-        width: 80%;
-        height: 30px;
-        background-color: var(--light-bg);
-        border: 2px solid var(--border-color);
-        border-radius: 15px;
-        margin: 0 auto 20px auto;
-        overflow: hidden;
-      }
-      #soundLevelBar {
-        width: 0%;
-        height: 100%;
-        background-color: hsl(120, 100%, 50%);
-        border-radius: 15px;
-        transition: width 0.1s ease-out, background-color 0.1s ease-out;
-      }
-      .button:active {
-        transform: scale(0.97);
-      }
-      #toggleButton {
-        background: var(--primary-color);
-      }
-      #toggleButton:hover {
-        background: var(--primary-dark);
-      }
-      #toggleButton.stop-mode {
-        background: var(--stop-color);
-      }
-      #toggleButton.stop-mode:hover {
-        background: var(--alert-color);
-      }
-      #status {
-        font-size: 1.05rem;
-        margin-top: 20px;
-        color: var(--light-text);
-        min-height: 1.2em;
-      }
-      #logContainer {
-        background: var(--light-bg);
-        padding: 20px 25px;
-        border-top: 1px solid var(--border-color);
-      }
-      #logContainer h3 {
-        font-weight: 500;
-        margin-bottom: 15px;
-        text-align: center;
-        color: var(--dark-text);
-        font-size: 1.3rem;
-      }
-      #logList {
-        list-style: none;
-        max-height: 200px;
-        overflow-y: auto;
-        border: 1px solid var(--border-color);
-        background: #fff;
-        border-radius: 10px;
-        padding: 10px;
-        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.03);
-      }
-      #logList li {
-        padding: 10px 12px;
-        font-family: "Roboto Mono", monospace;
-        font-size: 0.85rem;
-        color: var(--dark-text);
-        border-bottom: 1px solid #eee;
-        animation: slideIn 0.3s ease-out;
-      }
-      #logList li:last-child {
-        border-bottom: none;
-      }
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateX(-20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
     </style>
-  </head>
-  <body>
+</head>
+<body>
+
     <div class="container">
-      <fieldset id="settings">
-        <legend>Sound Alert Settings</legend>
-        <div>
-          <label for="fileNameInput">MP3 File Name:</label>
-          <input type="text" id="fileNameInput" value="ringtone.mp3" />
+        <fieldset id="settings">
+            <legend>Sound Alert Settings</legend>
+            
+            <div>
+                <label for="fileNameSelect">Select MP3 File:</label>
+                <select id="fileNameSelect">
+                    <option value="ringtone.mp3">Ringtone (Default)</option>
+                    <option value="Scary Music.mp3">High Alert Sound</option>
+                    <option value="donkey.mp3">Voice Warning</option>
+                    </select>
+            </div>
+            <div>
+                <label for="thresholdInput">Threshold Limit (0-255):</label>
+                <input type="number" id="thresholdInput" value="50">
+            </div>
+            <div>
+                <label for="intervalInput">Log Interval (Seconds):</label>
+                <input type="number" id="intervalInput" value="2">
+            </div>
+        </fieldset>
+
+        <div class="controls">
+            <div id="cartoonVisualizer">🎧</div>
+            <div class="sound-level-meter">
+                <div id="soundLevelBar"></div>
+            </div>
+            <button id="toggleButton" class="button">Start Listening</button>
+            <div id="status">Click 'Start Listening' to begin.</div>
         </div>
-        <div>
-          <label for="thresholdInput">Threshold Limit (0-255):</label>
-          <input type="number" id="thresholdInput" value="50" />
+
+        <audio id="ringtone" preload="auto"></audio>
+
+        <div id="logContainer">
+            <h3>Sound Level Log</h3>
+            <ul id="logList"></ul>
         </div>
-        <div>
-          <label for="intervalInput">Log Interval (Seconds):</label>
-          <input type="number" id="intervalInput" value="2" />
-        </div>
-      </fieldset>
-
-      <div class="controls">
-        <div id="cartoonVisualizer">🎧</div>
-
-        <div class="sound-level-meter">
-          <div id="soundLevelBar"></div>
-        </div>
-
-        <button id="toggleButton" class="button">Start Listening</button>
-        <div id="status">Click 'Start Listening' to begin.</div>
-      </div>
-
-      <audio id="ringtone" preload="auto"></audio>
-
-      <div id="logContainer">
-        <h3>Sound Level Log</h3>
-        <ul id="logList"></ul>
-      </div>
+        
     </div>
 
     <script>
-      const toggleButton = document.getElementById("toggleButton");
-      const statusDiv = document.getElementById("status");
-      const ringtone = document.getElementById("ringtone");
-      const logList = document.getElementById("logList");
-      const visualizer = document.getElementById("cartoonVisualizer");
-      const soundLevelBar = document.getElementById("soundLevelBar");
-      const settingsContainer = document.getElementById("settings");
+        const toggleButton = document.getElementById('toggleButton');
+        const statusDiv = document.getElementById('status');
+        const ringtone = document.getElementById('ringtone');
+        const logList = document.getElementById('logList');
+        const visualizer = document.getElementById('cartoonVisualizer');
+        const soundLevelBar = document.getElementById('soundLevelBar');
+        const settingsContainer = document.getElementById('settings');
 
-      const fileNameInput = document.getElementById("fileNameInput");
-      const thresholdInput = document.getElementById("thresholdInput");
-      const intervalInput = document.getElementById("intervalInput");
+        // ইনপুট বক্সের বদলে ড্রপডাউন সিলেক্ট করা
+        const fileNameSelect = document.getElementById('fileNameSelect'); 
+        const thresholdInput = document.getElementById('thresholdInput');
+        const intervalInput = document.getElementById('intervalInput');
 
-      let SOUND_THRESHOLD;
-      let LOG_INTERVAL_MS;
-      const COOLDOWN_SECONDS = 5;
-      let barMaxValue;
+        let SOUND_THRESHOLD;
+        let LOG_INTERVAL_MS;
+        const COOLDOWN_SECONDS = 5; 
+        let barMaxValue; 
 
-      let isPlaying = false;
-      let lastPlayedTime = 0;
-      let averageVolume = 0;
-      let isListening = false;
+        let isPlaying = false;
+        let lastPlayedTime = 0;
+        let averageVolume = 0;
+        let isListening = false; 
+        
+        let stream, audioContext, analyser, dataArray, logInterval;
+        let wakeLock = null;
 
-      let stream, audioContext, analyser, dataArray, logInterval;
+        // (checkSoundLevel ফাংশন অপরিবর্তিত)
+        function checkSoundLevel() {
+            if (!isListening) return; 
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+            averageVolume = sum / dataArray.length;
+            statusDiv.textContent = `Current Level: ${averageVolume.toFixed(2)} (Threshold: ${SOUND_THRESHOLD})`;
+            
+            let soundPercentage = Math.min(100, (averageVolume / barMaxValue) * 100);
+            soundLevelBar.style.width = soundPercentage + '%';
+            
+            let hue = 120 - (soundPercentage * 1.2); 
+            soundLevelBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
 
-      let wakeLock = null;
+            if (!isPlaying) {
+                const scale = 1 + (averageVolume / 255) * 0.5;
+                visualizer.style.transform = `scale(${scale})`;
+            }
 
-      function checkSoundLevel() {
-        if (!isListening) return;
+            const currentTime = Date.now() / 1000;
 
-        analyser.getByteFrequencyData(dataArray);
-
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-        averageVolume = sum / dataArray.length;
-
-        statusDiv.textContent = `Current Level: ${averageVolume.toFixed(
-          2
-        )} (Threshold: ${SOUND_THRESHOLD})`;
-
-        let soundPercentage = Math.min(
-          100,
-          (averageVolume / barMaxValue) * 100
-        );
-        soundLevelBar.style.width = soundPercentage + "%";
-
-        let hue = 120 - soundPercentage * 1.2;
-        soundLevelBar.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
-
-        if (!isPlaying) {
-          const scale = 1 + (averageVolume / 255) * 2;
-          visualizer.style.transform = `scale(${scale})`;
+            if (averageVolume > SOUND_THRESHOLD) {
+                if (!isPlaying && (currentTime - lastPlayedTime > COOLDOWN_SECONDS)) {
+                    isPlaying = true;
+                    lastPlayedTime = currentTime;
+                    statusDiv.textContent = `ALERT! (Level: ${averageVolume.toFixed(2)}) - Playing alert!`;
+                    ringtone.play();
+                    visualizer.classList.add('alert');
+                    visualizer.textContent = '🚨';
+                }
+            }
+            requestAnimationFrame(checkSoundLevel);
         }
 
-        const currentTime = Date.now() / 1000;
+        // (ringtone.onended ফাংশন অপরিবর্তিত)
+        ringtone.onended = () => {
+            isPlaying = false;
+            visualizer.classList.remove('alert');
+            visualizer.textContent = '🎧';
+        };
 
-        if (averageVolume > SOUND_THRESHOLD) {
-          if (!isPlaying && currentTime - lastPlayedTime > COOLDOWN_SECONDS) {
-            isPlaying = true;
-            lastPlayedTime = currentTime;
-            statusDiv.textContent = `ALERT! (Level: ${averageVolume.toFixed(
-              2
-            )}) - Playing alert!`;
-            ringtone.play();
+        // (startMonitoring ফাংশনে পরিবর্তন)
+        async function startMonitoring() {
+            try {
+                // ইনপুট বক্সের বদলে ড্রপডাউন থেকে মান নেওয়া
+                const fileName = fileNameSelect.value; 
+                SOUND_THRESHOLD = parseFloat(thresholdInput.value);
+                const intervalSeconds = parseFloat(intervalInput.value);
+                LOG_INTERVAL_MS = intervalSeconds * 1000; 
+                barMaxValue = SOUND_THRESHOLD * 1.10; // 10%
+                
+                ringtone.src = './' + fileName; // fileName এখন ড্রপডাউন থেকে আসছে
+                ringtone.load(); 
 
-            visualizer.classList.add("alert");
-            visualizer.textContent = "🚨";
-          }
+                // (WakeLock এবং মাইক্রোফোন কোড অপরিবর্তিত)
+                try {
+                    if ('wakeLock' in navigator) {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                    }
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                }
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256; 
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                // UI আপডেট (সেটিংস ডিজেবল)
+                settingsContainer.disabled = true; 
+                toggleButton.textContent = "Stop Listening";
+                toggleButton.classList.add('stop-mode');
+                statusDiv.textContent = "Monitoring sound level...";
+                
+                isListening = true; 
+                checkSoundLevel();
+
+                // (লগিং ইন্টারভ্যাল অপরিবর্তিত)
+                logInterval = setInterval(() => {
+                    const newLogItem = document.createElement('li');
+                    const timestamp = new Date().toLocaleTimeString();
+                    newLogItem.textContent = `[${timestamp}] Level: ${averageVolume.toFixed(2)}`;
+                    logList.prepend(newLogItem);
+                    if (logList.children.length > 50) {
+                        logList.removeChild(logList.lastChild);
+                    }
+                }, LOG_INTERVAL_MS); 
+
+            } catch (err) {
+                console.error("Error starting monitoring:", err);
+                statusDiv.textContent = `Error: ${err.message}.`;
+                stopMonitoring(); D
+            }
+        }
+        
+        // (stopMonitoring এবং toggleButton.onclick ফাংশন অপরিবর্তিত)
+        function stopMonitoring() {
+            isListening = false; 
+            if (wakeLock) {
+                wakeLock.release().then(() => { wakeLock = null; });
+            }
+            if (audioContext) audioContext.close();
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            if (logInterval) clearInterval(logInterval);
+            
+            settingsContainer.disabled = false; // সেটিংস (ড্রপডাউন সহ) এনাবল করা
+            toggleButton.textContent = "Start Listening";
+            toggleButton.classList.remove('stop-mode');
+            
+            statusDiv.textContent = "Click 'Start Listening' to begin.";
+            visualizer.textContent = '🎧';
+            visualizer.classList.remove('alert');
+            visualizer.style.transform = 'scale(1)';
+            soundLevelBar.style.width = '0%';
+            soundLevelBar.style.backgroundColor = 'hsl(120, 100%, 50%)'; 
+            
+            ringtone.pause();
+            ringtone.currentTime = 0;
+            isPlaying = false;
         }
 
-        requestAnimationFrame(checkSoundLevel);
-      }
-
-      ringtone.onended = () => {
-        isPlaying = false;
-        visualizer.classList.remove("alert");
-        visualizer.textContent = "🎧";
-      };
-
-      async function startMonitoring() {
-        try {
-          const fileName = fileNameInput.value;
-          SOUND_THRESHOLD = parseFloat(thresholdInput.value);
-          const intervalSeconds = parseFloat(intervalInput.value);
-          LOG_INTERVAL_MS = intervalSeconds * 1000;
-          barMaxValue = SOUND_THRESHOLD * 1.05;
-
-          ringtone.src = "./" + fileName;
-          ringtone.load();
-
-          try {
-            if ("wakeLock" in navigator) {
-              wakeLock = await navigator.wakeLock.request("screen");
-              console.log("Screen Wake Lock is active.");
+        toggleButton.onclick = () => {
+            if (isListening) {
+                stopMonitoring();
             } else {
-              console.warn("WakeLock API not supported.");
+                startMonitoring();
             }
-          } catch (err) {
-            console.error(`${err.name}, ${err.message}`);
-            statusDiv.textContent = "Warning: Could not keep screen awake.";
-          }
-
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          audioContext = new (window.AudioContext ||
-            window.webkitAudioContext)();
-          analyser = audioContext.createAnalyser();
-          analyser.fftSize = 256;
-
-          const source = audioContext.createMediaStreamSource(stream);
-          source.connect(analyser);
-          dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-          settingsContainer.disabled = true;
-          toggleButton.textContent = "Stop Listening";
-          toggleButton.classList.add("stop-mode");
-          statusDiv.textContent = "Monitoring sound level...";
-
-          isListening = true;
-          checkSoundLevel();
-
-          logInterval = setInterval(() => {
-            const newLogItem = document.createElement("li");
-            const timestamp = new Date().toLocaleTimeString();
-            newLogItem.textContent = `[${timestamp}] Level: ${averageVolume.toFixed(
-              2
-            )}`;
-            logList.prepend(newLogItem);
-
-            if (logList.children.length > 50) {
-              logList.removeChild(logList.lastChild);
-            }
-          }, LOG_INTERVAL_MS);
-        } catch (err) {
-          console.error("Error starting monitoring:", err);
-          statusDiv.textContent = `Error: ${err.message}.`;
-          stopMonitoring();
-        }
-      }
-
-      function stopMonitoring() {
-        isListening = false;
-
-        if (wakeLock) {
-          wakeLock
-            .release()
-            .then(() => {
-              wakeLock = null;
-              console.log("Screen Wake Lock released.");
-            })
-            .catch((err) => console.error("WakeLock release failed:", err));
-        }
-
-        if (audioContext) audioContext.close();
-        if (stream) stream.getTracks().forEach((track) => track.stop());
-        if (logInterval) clearInterval(logInterval);
-
-        settingsContainer.disabled = false;
-        toggleButton.textContent = "Start Listening";
-        toggleButton.classList.remove("stop-mode");
-
-        statusDiv.textContent = "Click 'Start Listening' to begin.";
-        visualizer.textContent = "🎧";
-        visualizer.classList.remove("alert");
-        visualizer.style.transform = "scale(1)";
-
-        soundLevelBar.style.width = "0%";
-        soundLevelBar.style.backgroundColor = "hsl(120, 100%, 50%)";
-
-        ringtone.pause();
-        ringtone.currentTime = 0;
-        isPlaying = false;
-      }
-
-      toggleButton.onclick = () => {
-        if (isListening) {
-          stopMonitoring();
-        } else {
-          startMonitoring();
-        }
-      };
+        };
     </script>
-  </body>
+
+</body>
 </html>
