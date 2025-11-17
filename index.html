@@ -11,28 +11,29 @@
     
     <style>
         :root {
-            --primary-color: #00aaff; /* Bright Blue */
+            --primary-color: #00aaff;
             --primary-dark: #0088cc;
-            --alert-color: #ff4757; /* Bright Red */
-            --stop-color: #ff6347; /* Tomato Red */
-            --light-bg: #f0f8ff; /* Light Blue Tint */
+            --alert-color: #ff4757;
+            --stop-color: #ff6347;
+            --light-bg: #f0f8ff;
             --dark-text: #333;
             --light-text: #777;
             --border-color: #d6e9f8;
             --shadow: 0 6px 20px rgba(0, 170, 255, 0.15);
         }
-        /* (বাকি সব CSS একই আছে) */
+        
+        /* আগের সব CSS অপরিবর্তিত */
         body, .container, #settings, #settings legend,
         #settings div, #settings label, #settings:disabled,
         .controls, #cartoonVisualizer, #cartoonVisualizer.alert,
         @keyframes shake, .sound-level-meter, #soundLevelBar,
         .button, .button:active, #toggleButton, #toggleButton:hover,
-        #toggleButton.stop-mode, #status, #logContainer,
+        #toggleButton.stop-mode, #logContainer,
         #logContainer h3, #logList, #logList li, @keyframes slideIn {
-             /* ... (এই সব স্টাইল আগের মতোই আছে) ... */
+             /* ... আগের স্টাইল ... */
         }
 
-        /* === ইনপুট বক্সের বদলে ড্রপডাউন স্টাইল === */
+        /* ড্রপডাউন এবং ইনপুট স্টাইল */
         #settings input, #settings select {
             width: 100%;
             padding: 14px;
@@ -47,8 +48,32 @@
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.15);
         }
+
+        /* নতুন: অ্যালার্ট কাউন্ট ডিসপ্লে */
+        #countDisplay {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            background: #e0f7fa;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        /* লিমিট শেষ হয়ে গেলে লাল হবে */
+        #countDisplay.limit-reached {
+            color: white;
+            background: var(--stop-color);
+        }
+
+        #status {
+            font-size: 1.05rem;
+            margin-top: 20px;
+            color: var(--light-text);
+            min-height: 1.2em;
+        }
         
-        /* (নিচের CSS কোডগুলি শুধু কপি-পেস্ট করুন) */
+        /* বাকি CSS */
         body { font-family: 'Roboto', sans-serif; background: var(--light-bg); color: var(--dark-text); display: grid; place-items: center; min-height: 100vh; padding: 20px; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         .container { width: 100%; max-width: 480px; background: #ffffff; border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; border: 2px solid #fff; }
@@ -69,7 +94,6 @@
         #toggleButton:hover { background: var(--primary-dark); }
         #toggleButton.stop-mode { background: var(--stop-color); }
         #toggleButton.stop-mode:hover { background: var(--alert-color); }
-        #status { font-size: 1.05rem; margin-top: 20px; color: var(--light-text); min-height: 1.2em; }
         #logContainer { background: var(--light-bg); padding: 20px 25px; border-top: 1px solid var(--border-color); }
         #logContainer h3 { font-weight: 500; margin-bottom: 15px; text-align: center; color: var(--dark-text); font-size: 1.3rem; }
         #logList { list-style: none; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); background: #fff; border-radius: 10px; padding: 10px; box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.03); }
@@ -92,12 +116,19 @@
                     <option value="Scary Music.mp3">Scary Music</option>
                     <option value="donkey.mp3">donkey</option>
                     <option value="alhamdulillah.mp3">alhamdulillah</option>
-                    </select>
+                </select>
             </div>
+            
             <div>
                 <label for="thresholdInput">Threshold Limit (0-255):</label>
                 <input type="number" id="thresholdInput" value="50">
             </div>
+
+            <div>
+                <label for="maxAlertsInput">Max Alerts Limit:</label>
+                <input type="number" id="maxAlertsInput" value="5" min="1">
+            </div>
+
             <div>
                 <label for="intervalInput">Log Interval (Seconds):</label>
                 <input type="number" id="intervalInput" value="2">
@@ -105,6 +136,8 @@
         </fieldset>
 
         <div class="controls">
+            <div id="countDisplay">Alerts: 0 / 5</div>
+
             <div id="cartoonVisualizer">🎧</div>
             <div class="sound-level-meter">
                 <div id="soundLevelBar"></div>
@@ -130,14 +163,19 @@
         const visualizer = document.getElementById('cartoonVisualizer');
         const soundLevelBar = document.getElementById('soundLevelBar');
         const settingsContainer = document.getElementById('settings');
+        
+        // নতুন: কাউন্ট ডিসপ্লে
+        const countDisplay = document.getElementById('countDisplay');
 
-        // ইনপুট বক্সের বদলে ড্রপডাউন সিলেক্ট করা
         const fileNameSelect = document.getElementById('fileNameSelect'); 
         const thresholdInput = document.getElementById('thresholdInput');
         const intervalInput = document.getElementById('intervalInput');
+        // নতুন: ম্যাক্স অ্যালার্ট ইনপুট
+        const maxAlertsInput = document.getElementById('maxAlertsInput');
 
         let SOUND_THRESHOLD;
         let LOG_INTERVAL_MS;
+        let MAX_ALERTS; // ম্যাক্স লিমিট ভেরিয়েবল
         const COOLDOWN_SECONDS = 5; 
         let barMaxValue; 
 
@@ -146,17 +184,30 @@
         let averageVolume = 0;
         let isListening = false; 
         
+        let alertCount = 0; // অ্যালার্ট গোনার জন্য
+        
         let stream, audioContext, analyser, dataArray, logInterval;
         let wakeLock = null;
 
-        // (checkSoundLevel ফাংশন অপরিবর্তিত)
         function checkSoundLevel() {
             if (!isListening) return; 
+            
             analyser.getByteFrequencyData(dataArray);
             let sum = 0;
             for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
             averageVolume = sum / dataArray.length;
-            statusDiv.textContent = `Current Level: ${averageVolume.toFixed(2)} (Threshold: ${SOUND_THRESHOLD})`;
+            
+            // সাধারণ স্ট্যাটাস আপডেট
+            let statusText = `Current Level: ${averageVolume.toFixed(2)} (Threshold: ${SOUND_THRESHOLD})`;
+
+            // লিমিট চেক করা
+            if (alertCount >= MAX_ALERTS) {
+                statusText = "Max alerts reached! Reset required.";
+                statusDiv.style.color = "var(--stop-color)";
+            } else {
+                statusDiv.style.color = "var(--light-text)";
+            }
+            statusDiv.textContent = statusText;
             
             let soundPercentage = Math.min(100, (averageVolume / barMaxValue) * 100);
             soundLevelBar.style.width = soundPercentage + '%';
@@ -172,9 +223,16 @@
             const currentTime = Date.now() / 1000;
 
             if (averageVolume > SOUND_THRESHOLD) {
-                if (!isPlaying && (currentTime - lastPlayedTime > COOLDOWN_SECONDS)) {
+                // নতুন লজিক: রিংটোন বাজবে শুধুমাত্র যদি লিমিট ক্রস না করে
+                if (!isPlaying && (currentTime - lastPlayedTime > COOLDOWN_SECONDS) && alertCount < MAX_ALERTS) {
+                    
                     isPlaying = true;
                     lastPlayedTime = currentTime;
+                    
+                    // কাউন্টার বাড়ানো
+                    alertCount++;
+                    updateCountDisplay(); // ডিসপ্লে আপডেট
+
                     statusDiv.textContent = `ALERT! (Level: ${averageVolume.toFixed(2)}) - Playing alert!`;
                     ringtone.play();
                     visualizer.classList.add('alert');
@@ -184,27 +242,48 @@
             requestAnimationFrame(checkSoundLevel);
         }
 
-        // (ringtone.onended ফাংশন অপরিবর্তিত)
+        // ডিসপ্লে আপডেট করার ফাংশন
+        function updateCountDisplay() {
+            countDisplay.textContent = `Alerts: ${alertCount} / ${MAX_ALERTS}`;
+            if (alertCount >= MAX_ALERTS) {
+                countDisplay.classList.add('limit-reached');
+                visualizer.textContent = '🚫'; // লিমিট শেষ হলে আইকন
+            } else {
+                countDisplay.classList.remove('limit-reached');
+            }
+        }
+
         ringtone.onended = () => {
             isPlaying = false;
             visualizer.classList.remove('alert');
-            visualizer.textContent = '🎧';
+            
+            // যদি লিমিট শেষ হয়ে যায়, তাহলে স্টপ আইকন, না হলে হেডফোন
+            if (alertCount >= MAX_ALERTS) {
+                visualizer.textContent = '🚫';
+            } else {
+                visualizer.textContent = '🎧';
+            }
         };
 
-        // (startMonitoring ফাংশনে পরিবর্তন)
         async function startMonitoring() {
             try {
-                // ইনপুট বক্সের বদলে ড্রপডাউন থেকে মান নেওয়া
                 const fileName = fileNameSelect.value; 
                 SOUND_THRESHOLD = parseFloat(thresholdInput.value);
                 const intervalSeconds = parseFloat(intervalInput.value);
                 LOG_INTERVAL_MS = intervalSeconds * 1000; 
-                barMaxValue = SOUND_THRESHOLD * 1.10; // 10%
                 
-                ringtone.src = './' + fileName; // fileName এখন ড্রপডাউন থেকে আসছে
+                // নতুন: ম্যাক্স অ্যালার্ট সেট করা
+                MAX_ALERTS = parseInt(maxAlertsInput.value);
+                
+                barMaxValue = SOUND_THRESHOLD * 1.10; 
+                
+                // রিসেট কাউন্টার
+                alertCount = 0;
+                updateCountDisplay();
+                
+                ringtone.src = './' + fileName; 
                 ringtone.load(); 
 
-                // (WakeLock এবং মাইক্রোফোন কোড অপরিবর্তিত)
                 try {
                     if ('wakeLock' in navigator) {
                         wakeLock = await navigator.wakeLock.request('screen');
@@ -220,16 +299,15 @@
                 source.connect(analyser);
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-                // UI আপডেট (সেটিংস ডিজেবল)
                 settingsContainer.disabled = true; 
-                toggleButton.textContent = "Stop Listening";
+                toggleButton.textContent = "Stop & Reset"; // টেক্সট চেঞ্জ
                 toggleButton.classList.add('stop-mode');
                 statusDiv.textContent = "Monitoring sound level...";
+                statusDiv.style.color = "var(--light-text)";
                 
                 isListening = true; 
                 checkSoundLevel();
 
-                // (লগিং ইন্টারভ্যাল অপরিবর্তিত)
                 logInterval = setInterval(() => {
                     const newLogItem = document.createElement('li');
                     const timestamp = new Date().toLocaleTimeString();
@@ -243,11 +321,10 @@
             } catch (err) {
                 console.error("Error starting monitoring:", err);
                 statusDiv.textContent = `Error: ${err.message}.`;
-                stopMonitoring(); D
+                stopMonitoring(); 
             }
         }
         
-        // (stopMonitoring এবং toggleButton.onclick ফাংশন অপরিবর্তিত)
         function stopMonitoring() {
             isListening = false; 
             if (wakeLock) {
@@ -257,16 +334,21 @@
             if (stream) stream.getTracks().forEach(track => track.stop());
             if (logInterval) clearInterval(logInterval);
             
-            settingsContainer.disabled = false; // সেটিংস (ড্রপডাউন সহ) এনাবল করা
+            settingsContainer.disabled = false; 
             toggleButton.textContent = "Start Listening";
             toggleButton.classList.remove('stop-mode');
             
             statusDiv.textContent = "Click 'Start Listening' to begin.";
+            statusDiv.style.color = "var(--light-text)";
+            
             visualizer.textContent = '🎧';
             visualizer.classList.remove('alert');
             visualizer.style.transform = 'scale(1)';
             soundLevelBar.style.width = '0%';
             soundLevelBar.style.backgroundColor = 'hsl(120, 100%, 50%)'; 
+            
+            // রিসেট ডিসপ্লে (UI-তে দেখানোর জন্য, ভেরিয়েবল পরে রিসেট হবে)
+            countDisplay.classList.remove('limit-reached');
             
             ringtone.pause();
             ringtone.currentTime = 0;
@@ -284,5 +366,3 @@
 
 </body>
 </html>
-
-
